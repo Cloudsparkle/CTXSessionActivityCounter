@@ -1,30 +1,60 @@
-﻿asnp citrix*
+<#
+.SYNOPSIS
+  Counts the number of logons while this script is running
+.DESCRIPTION
+  This script counts the number of session logons while running
+.INPUTS
+  None
+.OUTPUTS
+  Number of session logons
+.NOTES
+  Version:        1.0
+  Author:         Bart Jacobs - @Cloudsparkle
+  Creation Date:  16/09/2021
+  Purpose/Change: Count session logons
+.EXAMPLE
+  None
+#>
+#Try loading Citrix Powershell modules, exit when failed
+If ((Get-PSSnapin "Citrix*" -EA silentlycontinue) -eq $null)
+  {
+    try {Add-PSSnapin Citrix* -ErrorAction Stop }
+    catch {Write-error "Error loading Citrix Powershell snapins"; Return }
+  }
+
+#Variables to be customized
+$CTXDDC = "localhost" #Choose any Delivery Controller
+
+#Setting inital values
 $Logoncount = 0
 $KeyList = @()
 $startTime = $(get-date)
 $sleepTimer=500 #in milliseconds
 $QuitKey=81 #Character code for 'q' key.
+
 while($true)
 {
-    if($host.UI.RawUI.KeyAvailable) {
-        $key = $host.ui.RawUI.ReadKey("NoEcho,IncludeKeyUp")
-        if($key.VirtualKeyCode -eq $QuitKey) {
-            #For Key Combination: eg., press 'LeftCtrl + q' to quit.
-            #Use condition: (($key.VirtualKeyCode -eq $Qkey) -and ($key.ControlKeyState -match "LeftCtrlPressed"))
-            Write-Host -ForegroundColor Yellow ("'q' is pressed! Stopping the script now.")
-            break
-        }
-    }
-    $Logonsessions = Get-BrokerSession -maxrecordcount 10000 | where-object -Property LogonInProgress -like 'True' | Select SessionKey
-    foreach ($Logonsession in $Logonsessions)
+  if($host.UI.RawUI.KeyAvailable)
+  {
+    $key = $host.ui.RawUI.ReadKey("NoEcho,IncludeKeyUp")
+    if($key.VirtualKeyCode -eq $QuitKey)
     {
-        $KeyList += ,$Logonsession.sessionkey
+      #For Key Combination: eg., press 'LeftCtrl + q' to quit.
+      #Use condition: (($key.VirtualKeyCode -eq $Qkey) -and ($key.ControlKeyState -match "LeftCtrlPressed"))
+      Write-Host -ForegroundColor Yellow ("'q' is pressed! Stopping the script now.")
+      break
     }
-    $ElapsedTime = new-timespan $startTime $(get-date)
-    cls
-    Write-Host "SessionLogonCounter has been running for:" $($ElapsedTime.ToString("hh\:mm\:ss"))
-    Write-Host ("Press 'q' to stop the script!")
-    Start-Sleep -m $sleepTimer
+  }
+  $Logonsessions = Get-BrokerSession -adminaddress $CTXDDC -maxrecordcount 10000 | where-object -Property LogonInProgress -like 'True' | Select SessionKey
+  foreach ($Logonsession in $Logonsessions)
+  {
+    $KeyList += ,$Logonsession.sessionkey
+  }
+  $ElapsedTime = new-timespan $startTime $(get-date)
+  cls
+  Write-Host "SessionLogonCounter has been running for:" $($ElapsedTime.ToString("hh\:mm\:ss"))
+  Write-Host ("Press 'q' to stop the script!")
+  Start-Sleep -m $sleepTimer
 }
 
 $Logoncount = ($KeyList | select -Unique).count
