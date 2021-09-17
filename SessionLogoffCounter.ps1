@@ -34,6 +34,7 @@ $QuitKey=81 #Character code for 'q' key.
 
 while($true)
 {
+  # Catch 'q' keypress
   if($host.UI.RawUI.KeyAvailable)
   {
     $key = $host.ui.RawUI.ReadKey("NoEcho,IncludeKeyUp")
@@ -45,8 +46,11 @@ while($true)
       break
     }
   }
+
+  # Get all sessions in LogoffInProgress state
   $Logoffsessions = Get-BrokerSession -adminaddress $CTXDDC -maxrecordcount 10000 | where-object -Property LogoffInProgress -like 'True' | Select SessionKey
-  foreach ($Logofsession in $Logoffsessions)
+  # Get all SessionKeys for those sessions
+  foreach ($Logoffsession in $Logoffsessions)
   {
     $KeyList += ,$Logoffsession.sessionkey
   }
@@ -56,7 +60,7 @@ while($true)
   Write-Host ("Press 'q' to stop the script!")
   Start-Sleep -m $sleepTimer
 }
-
+# Count all unique session keys in LogonInProgress state
 $Logoffcount = ($KeyList | select -Unique).count
 cls
 Write-Host -ForegroundColor Green "SessionLogoffCounter runtime:" $($elapsedTime.ToString("hh\:mm\:ss"))
