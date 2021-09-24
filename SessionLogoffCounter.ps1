@@ -37,12 +37,9 @@ while($true)
   # Catch 'q' keypress
   if($host.UI.RawUI.KeyAvailable)
   {
-    $key = $host.ui.RawUI.ReadKey("NoEcho,IncludeKeyUp")
+    $key = $host.ui.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     if($key.VirtualKeyCode -eq $QuitKey)
     {
-      #For Key Combination: eg., press 'LeftCtrl + q' to quit.
-      #Use condition: (($key.VirtualKeyCode -eq $Qkey) -and ($key.ControlKeyState -match "LeftCtrlPressed"))
-      Write-Host -ForegroundColor Yellow ("'q' is pressed! Stopping the script now.")
       break
     }
   }
